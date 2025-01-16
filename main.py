@@ -6,8 +6,8 @@ import urllib3
 
 from elasticsearch import Elasticsearch, exceptions
 
+# Removes insecure warning if system doesn't have the certificate
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST')
 ELASTICSEARCH_APIKEY = os.getenv('ELASTICSEARCH_APIKEY')
@@ -85,7 +85,7 @@ def get_index_stats(index):
             'index': index,
             'first_timestamp': first_timestamp,
             'last_timestamp': last_timestamp,
-            'daily_ingest_mb': daily_ingest_mb
+            'daily_ingest_mb': str(daily_ingest_mb).replace(".", ",") # 123,21 instead of 123.21 for stupid excel
         }
 
     except exceptions.BadRequestError as e:
@@ -95,7 +95,7 @@ def get_index_stats(index):
 
 def initialize_csv(filename=OUTPUT_FILE):
     with open(filename, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=[
+        writer = csv.DictWriter(file, delimiter=';', fieldnames=[
             'index', 'first_timestamp', 'last_timestamp', 'daily_ingest_mb'
         ])
         writer.writeheader()
@@ -103,7 +103,7 @@ def initialize_csv(filename=OUTPUT_FILE):
 
 def append_to_csv(data, filename=OUTPUT_FILE):
     with open(filename, mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=[
+        writer = csv.DictWriter(file, delimiter=';', fieldnames=[
             'index', 'first_timestamp', 'last_timestamp', 'daily_ingest_mb'
         ])
         writer.writerow(data)
